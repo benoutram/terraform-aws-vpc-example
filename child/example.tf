@@ -58,6 +58,14 @@ resource "aws_security_group" "default" {
     cidr_blocks = ["80.2.226.42/32"]
   }
 
+  # HTTP access from Hive
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["80.2.226.42/32"]
+  }
+
   # HTTP access from the VPC
   #ingress {
   #  from_port   = 80
