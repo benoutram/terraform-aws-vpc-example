@@ -1,6 +1,6 @@
 terraform {
   backend "consul" {
-    address = "localhost:8500"
+    address = "172.17.0.2:8500"
     path    = "getting-started-example"
     lock    = true
   }
@@ -29,4 +29,3 @@ module "child" {
 output "child_ip" {
   value = "${module.child.ip}"
 }
-

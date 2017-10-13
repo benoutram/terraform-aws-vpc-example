@@ -75,31 +75,111 @@ resource "aws_security_group" "default" {
   }
 }
 
+resource "aws_iam_instance_profile" "example_instance_profile" {
+  name  = "example_instance_profile"
+  role = "${aws_iam_role.s3_access_role.name}"
+}
+
+resource "aws_iam_role" "s3_access_role" {
+  name = "s3_access_role"
+  path = "/"
+  assume_role_policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "",
+            "Effect": "Allow",
+            "Principal": {
+               "Service": "ec2.amazonaws.com"
+            },
+            "Action": "sts:AssumeRole"
+        }
+    ]
+}
+EOF
+}
+
+resource "aws_iam_role_policy" "web_iam_role_policy" {
+  name = "web_iam_role_policy"
+  role = "${aws_iam_role.s3_access_role.id}"
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": ["s3:ListBucket"],
+      "Resource": ["arn:aws:s3:::springboot-s3-example"]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject"
+      ],
+      "Resource": ["arn:aws:s3:::springboot-s3-example/*"]
+    }
+  ]
+}
+EOF
+}
+
+data "template_file" "springboot-conf" {
+  template = "${file("${path.module}/configs/spring-boot/springboot-s3-example.conf")}"
+
+  vars {
+    database_endpoint = "${aws_db_instance.default.endpoint}",
+    database_password = "${var.database_password}"
+  }
+}
+
 resource "aws_instance" "example" {
-  ami           = "${lookup(var.amis, var.region)}"
-  instance_type = "t2.micro"
-  key_name      = "${aws_key_pair.auth.id}"
+  ami                    = "${lookup(var.amis, var.region)}"
+  iam_instance_profile   = "${aws_iam_instance_profile.example_instance_profile.id}"
+  instance_type          = "t2.micro"
+  key_name               = "${aws_key_pair.auth.id}"
   vpc_security_group_ids = ["${aws_security_group.default.id}"]
-  subnet_id = "${aws_subnet.default.0.id}"
+  subnet_id              = "${aws_subnet.default.0.id}"
 
   provisioner "remote-exec" {
-    inline = [
-      "sudo yum update",
-      "sudo yum install nginx -y",
-      "sudo yum install java-1.8.0-openjdk-devel -y",
-      "sudo yum remove java-1.7.0-openjdk -y"
-    ]
+    script = "${path.module}/configs/provision.sh"
+
+    connection {
+      user = "ec2-user"
+    }
   }
 
   provisioner "file" {
     source = "${path.module}/configs/nginx/your-domain-name.conf"
-    destination = "/etc/nginx/conf.d/your-domain-name.conf"
+    destination = "/home/ec2-user/your-domain-name.conf"
+
+    connection {
+      user = "ec2-user"
+    }
+  }
+
+  provisioner "file" {
+    content     = "${data.template_file.springboot-conf.rendered}"
+    destination = "/home/ec2-user/springboot-s3-example.conf"
+
+    connection {
+      user = "ec2-user"
+    }
   }
 
   provisioner "remote-exec" {
     inline = [
-      "sudo service nginx start"
+      "sudo mv /home/ec2-user/your-domain-name.conf /etc/nginx/conf.d/your-domain-name.conf",
+      "sudo mv /home/ec2-user/springboot-s3-example.conf /opt/springboot-s3-example/springboot-s3-example.conf",
+      "sudo chmod 400 /opt/springboot-s3-example/springboot-s3-example.conf",
+      "sudo chown springboot:springboot /opt/springboot-s3-example/springboot-s3-example.conf",
+      "sudo service nginx start",
+      "sudo service springboot-s3-example start"
     ]
+
+    connection {
+      user = "ec2-user"
+    }
   }
 }
 
