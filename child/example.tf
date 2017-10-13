@@ -196,7 +196,7 @@ resource "aws_db_instance" "default" {
   identifier                = "${var.rds_instance_identifier}"
   allocated_storage         = 5
   engine                    = "mysql"
-  engine_version            = "5.7.17"
+  engine_version            = "5.6.35"
   instance_class            = "db.t2.micro"
   name                      = "${var.database_name}"
   username                  = "${var.database_user}"
@@ -244,7 +244,7 @@ resource "aws_security_group" "db_access" {
 
 resource "aws_db_parameter_group" "default" {
   name   = "${var.rds_instance_identifier}-pg"
-  family = "mysql5.7"
+  family = "mysql5.6"
 
   parameter {
     name = "character_set_server"
