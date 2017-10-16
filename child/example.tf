@@ -158,6 +158,15 @@ resource "aws_instance" "example" {
   }
 
   provisioner "file" {
+    source = "${path.module}/configs/nginx/nginx.conf"
+    destination = "/home/ec2-user/nginx.conf"
+
+    connection {
+      user = "ec2-user"
+    }
+  }
+
+  provisioner "file" {
     source = "${path.module}/configs/nginx/your-domain-name.conf"
     destination = "/home/ec2-user/your-domain-name.conf"
 
@@ -177,7 +186,10 @@ resource "aws_instance" "example" {
 
   provisioner "remote-exec" {
     inline = [
+      "sudo mv /home/ec2-user/nginx.conf /etc/nginx/nginx.conf",
+      "sudo chown root:root /etc/nginx/nginx.conf",
       "sudo mv /home/ec2-user/your-domain-name.conf /etc/nginx/conf.d/your-domain-name.conf",
+      "sudo chown root:root /etc/nginx/conf.d/your-domain-name.conf",
       "sudo mv /home/ec2-user/springboot-s3-example.conf /opt/springboot-s3-example/springboot-s3-example.conf",
       "sudo chmod 400 /opt/springboot-s3-example/springboot-s3-example.conf",
       "sudo chown springboot:springboot /opt/springboot-s3-example/springboot-s3-example.conf",
