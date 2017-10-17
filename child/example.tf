@@ -1,9 +1,10 @@
+# Create a key pair that will be assigned to our instance.
 resource "aws_key_pair" "auth" {
   key_name   = "${var.key_name}"
   public_key = "${file(var.public_key_path)}"
 }
 
-# Create a VPC to launch our instances into
+# Create a VPC to launch our instance into.
 resource "aws_vpc" "default" {
   cidr_block = "10.0.0.0/16"
   tags {
@@ -11,19 +12,19 @@ resource "aws_vpc" "default" {
   }
 }
 
-# Create an internet gateway to give our subnet access to the outside world
+# Create an internet gateway to give our subnet access to the outside world.
 resource "aws_internet_gateway" "default" {
   vpc_id = "${aws_vpc.default.id}"
 }
 
-# Grant the VPC internet access on its main route table
+# Grant the VPC internet access on its main route table.
 resource "aws_route" "internet_access" {
   route_table_id         = "${aws_vpc.default.main_route_table_id}"
   destination_cidr_block = "0.0.0.0/0"
   gateway_id             = "${aws_internet_gateway.default.id}"
 }
 
-# Create a subnet to launch our instances into
+# Create subnets for each availability zone to launch our instances into, each with address blocks within the VPC.
 resource "aws_subnet" "default" {
   count                   = "${length(var.availability_zones)}"
   vpc_id                  = "${aws_vpc.default.id}"
@@ -35,6 +36,7 @@ resource "aws_subnet" "default" {
   }
 }
 
+# Create subnets in each availability zone for RDS.
 resource "aws_subnet" "rds" {
   count                   = "${length(var.availability_zones)}"
   vpc_id                  = "${aws_vpc.default.id}"
@@ -46,11 +48,13 @@ resource "aws_subnet" "rds" {
   }
 }
 
+# Create a security group in our non-default VPC which our instance will belong to.
 resource "aws_security_group" "default" {
   name        = "terraform_example"
   description = "Terraform example security group"
   vpc_id     = "${aws_vpc.default.id}"
 
+  # Restrict inboud SSH traffic by IP address.
   ingress {
     from_port   = 22
     to_port     = 22
@@ -58,7 +62,7 @@ resource "aws_security_group" "default" {
     cidr_blocks = ["80.2.226.42/32"]
   }
 
-  # HTTP access from Hive
+  # Restrict inbound HTTP traffic by IP address.
   ingress {
     from_port   = 80
     to_port     = 80
@@ -66,7 +70,7 @@ resource "aws_security_group" "default" {
     cidr_blocks = ["80.2.226.42/32"]
   }
 
-  # HTTP access from the VPC
+  # HTTP access from the VPC (private access not required yet, since no other instances).
   #ingress {
   #  from_port   = 80
   #  to_port     = 80
@@ -74,7 +78,7 @@ resource "aws_security_group" "default" {
   #  cidr_blocks = ["10.0.0.0/16"]
   #}
 
-  # outbound internet access
+  # Allow outbound internet access.
   egress {
     from_port   = 0
     to_port     = 0
@@ -83,11 +87,13 @@ resource "aws_security_group" "default" {
   }
 }
 
+# Create a profile for the S3 access role that will passed to the EC2 instance when it starts.
 resource "aws_iam_instance_profile" "example_instance_profile" {
   name  = "example_instance_profile"
   role = "${aws_iam_role.s3_access_role.name}"
 }
 
+# Create the S3 access role with an inline policy allowing the AWS CLI to assume roles.
 resource "aws_iam_role" "s3_access_role" {
   name = "s3_access_role"
   path = "/"
@@ -108,6 +114,7 @@ resource "aws_iam_role" "s3_access_role" {
 EOF
 }
 
+# Attach a policy to the role with S3 access permissions for the example buckeit.
 resource "aws_iam_role_policy" "web_iam_role_policy" {
   name = "web_iam_role_policy"
   role = "${aws_iam_role.s3_access_role.id}"
@@ -132,6 +139,8 @@ resource "aws_iam_role_policy" "web_iam_role_policy" {
 EOF
 }
 
+/* Create a data source from a template file for Spring Boot run arguments. The variables will be interpolated within the template.
+   The Spring Boot database URL will be the endpoint of the database instance.*/
 data "template_file" "springboot-conf" {
   template = "${file("${path.module}/configs/spring-boot/springboot-s3-example.conf")}"
 
@@ -141,6 +150,7 @@ data "template_file" "springboot-conf" {
   }
 }
 
+# Create the EC2 instance in our non-default VPC in the first subnet.
 resource "aws_instance" "example" {
   ami                    = "${lookup(var.amis, var.region)}"
   iam_instance_profile   = "${aws_iam_instance_profile.example_instance_profile.id}"
@@ -149,6 +159,8 @@ resource "aws_instance" "example" {
   vpc_security_group_ids = ["${aws_security_group.default.id}"]
   subnet_id              = "${aws_subnet.default.0.id}"
 
+  /* Invoke the provision script after the resource is created
+     Installs Nginx, Java 8, copies the Spring Boot application from S3 and installs it as an init.d service */
   provisioner "remote-exec" {
     script = "${path.module}/configs/provision.sh"
 
@@ -157,6 +169,7 @@ resource "aws_instance" "example" {
     }
   }
 
+  # Copy the Nginx config to disable the default site.
   provisioner "file" {
     source = "${path.module}/configs/nginx/nginx.conf"
     destination = "/home/ec2-user/nginx.conf"
@@ -166,6 +179,7 @@ resource "aws_instance" "example" {
     }
   }
 
+  # Copy our Nginx site config to redirect port 80 to 8080.
   provisioner "file" {
     source = "${path.module}/configs/nginx/your-domain-name.conf"
     destination = "/home/ec2-user/your-domain-name.conf"
@@ -175,6 +189,7 @@ resource "aws_instance" "example" {
     }
   }
 
+  # Copy our Spring Boot run arguments.
   provisioner "file" {
     content     = "${data.template_file.springboot-conf.rendered}"
     destination = "/home/ec2-user/springboot-s3-example.conf"
@@ -184,6 +199,9 @@ resource "aws_instance" "example" {
     }
   }
 
+  /* Move files into position.
+     This is necessary since the files were uploaded as ec2-user, not root.
+     Start the Nginx and Spring Boot services */
   provisioner "remote-exec" {
     inline = [
       "sudo mv /home/ec2-user/nginx.conf /etc/nginx/nginx.conf",
@@ -203,15 +221,17 @@ resource "aws_instance" "example" {
   }
 }
 
+# Create an elastic IP for our instance.
 resource "aws_eip" "ip" {
   instance = "${aws_instance.example.id}"
 }
 
+# Define the elastic IP as an output variable which will be propagated up to the client of this module.
 output "ip" {
   value = "${aws_eip.ip.public_ip}"
 }
 
-# Create a database server
+# Create an RDS Mysql database instance in our non default VPC with our RDS subnet group.
 resource "aws_db_instance" "default" {
   identifier                = "${var.rds_instance_identifier}"
   allocated_storage         = 5
@@ -227,25 +247,27 @@ resource "aws_db_instance" "default" {
   final_snapshot_identifier = "Ignore"
 }
 
-# Configure the MySQL provider based on the outcome of
-# creating the aws_db_instance.
+# Configure the MySQL provider based on the outcome of creating the aws_db_instance.
 provider "mysql" {
   endpoint = "${aws_db_instance.default.endpoint}"
   username = "${aws_db_instance.default.username}"
   password = "${aws_db_instance.default.password}"
 }
 
+# Create the subnet group with all of our RDS subnets. The group will be applied to the database instance.  
 resource "aws_db_subnet_group" "db_subnet_group" {
   name        = "${var.rds_instance_identifier}-subnetgrp"
   description = "RDS subnet group"
   subnet_ids  = ["${aws_subnet.rds.*.id}"] 
 }
 
+# Create an RDS security group for our non default VPC.
 resource "aws_security_group" "db_access" {  
   name = "terraform_test_db"
   description = "RDS Mysql server (terraform-managed)"
   vpc_id = "${aws_vpc.default.id}"
 
+  # Keep the instance private by only allowing traffic from the web server.
   ingress {
     from_port = 3306
     to_port = 3306
@@ -262,6 +284,7 @@ resource "aws_security_group" "db_access" {
   }
 }
 
+# Manage the MySQL configuration by creating a parameter group
 resource "aws_db_parameter_group" "default" {
   name   = "${var.rds_instance_identifier}-pg"
   family = "mysql5.6"
