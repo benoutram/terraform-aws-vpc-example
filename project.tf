@@ -43,13 +43,13 @@ resource "aws_route" "route" {
 
 # Create subnets in each availability zone to launch our instances into, each with address blocks within the VPC.
 resource "aws_subnet" "main" {
-  count                   = "${length(var.availability_zones)}"
+  count                   = "${length(data.aws_availability_zones.available.names)}"
   vpc_id                  = "${aws_vpc.vpc.id}"
   cidr_block              = "10.0.${count.index}.0/24"
   map_public_ip_on_launch = true
-  availability_zone       = "${var.region}${element(var.availability_zones, count.index)}"
+  availability_zone       = "${element(data.aws_availability_zones.available.names, count.index)}"
   tags {
-    Name = "public-${var.region}${element(var.availability_zones, count.index)}"
+    Name = "public-${element(data.aws_availability_zones.available.names, count.index)}"
   }
 }
 
@@ -104,12 +104,6 @@ resource "aws_alb_target_group" "group" {
   }
 }
 
-# Register the instance in the target group.
-resource "aws_alb_target_group_attachment" "instance" {
-  target_group_arn = "${aws_alb_target_group.group.arn}"
-  target_id        = "${aws_instance.instance.id}"
-}
-
 # Create a new application load balancer listener.
 resource "aws_alb_listener" "listener" {
   load_balancer_arn = "${aws_alb.alb.arn}"
@@ -122,11 +116,6 @@ resource "aws_alb_listener" "listener" {
     target_group_arn = "${aws_alb_target_group.group.arn}"
     type             = "forward"
   }
-}
-
-# Provide details about our Route53 hosted zone.
-data "aws_route53_zone" "zone" {
-  name = "${var.route53_hosted_zone_name}"
 }
 
 # Define a record set in Route 53 for the load balancer.

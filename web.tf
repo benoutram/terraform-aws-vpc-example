@@ -33,10 +33,9 @@ resource "aws_security_group" "default" {
   }
 }
 
-/* Create a data source from a template file for Spring Boot run arguments. The variables will be interpolated within the template.
-   The Spring Boot database URL will be the endpoint of the database instance.*/
-data "template_file" "springboot_conf" {
-  template = "${file("${path.module}/configs/spring-boot/springboot-s3-example.conf")}"
+# Create a data source from a shell script for provisioning the machine. The variables will be interpolated within the script.
+data "template_file" "provision" {
+  template = "${file("${path.module}/configs/provision.sh")}"
 
   vars {
     database_endpoint = "${aws_db_instance.default.endpoint}",
@@ -44,82 +43,33 @@ data "template_file" "springboot_conf" {
   }
 }
 
-# Create an EC2 instance in the VPC in the first subnet.
-resource "aws_instance" "instance" {
-  ami                    = "${lookup(var.amis, var.region)}"
-  iam_instance_profile   = "${aws_iam_instance_profile.example_profile.id}"
-  instance_type          = "t2.micro"
-  key_name               = "${aws_key_pair.deployer.id}"
-  vpc_security_group_ids = ["${aws_security_group.default.id}"]
-  subnet_id              = "${aws_subnet.main.0.id}"
+# Create a new EC2 launch configuration to be used with the autoscaling group.
+resource "aws_launch_configuration" "launch_config" {
+  name_prefix                 = "terraform-example-web-instance"
+  image_id                    = "${lookup(var.amis, var.region)}"
+  iam_instance_profile        = "${aws_iam_instance_profile.example_profile.id}"
+  instance_type               = "${var.instance_type}"
+  key_name                    = "${aws_key_pair.deployer.id}"
+  security_groups             = ["${aws_security_group.default.id}"]
+  associate_public_ip_address = true
+  user_data                   = "${data.template_file.provision.rendered}"
 
-  /* Invoke the provision script after the resource is created
-     Installs Nginx, Java 8, copies the Spring Boot application from S3 and installs it as an init.d service */
-  provisioner "remote-exec" {
-    script = "${path.module}/configs/provision.sh"
-
-    connection {
-      user = "ec2-user"
-    }
-  }
-
-  # Copy the Nginx config to disable the default site.
-  provisioner "file" {
-    source      = "${path.module}/configs/nginx/nginx.conf"
-    destination = "/home/ec2-user/nginx.conf"
-
-    connection {
-      user = "ec2-user"
-    }
-  }
-
-  # Copy our Nginx site config to redirect port 80 to 8080.
-  provisioner "file" {
-    source      = "${path.module}/configs/nginx/springboot-s3-example-nginx.conf"
-    destination = "/home/ec2-user/springboot-s3-example-nginx.conf"
-
-    connection {
-      user = "ec2-user"
-    }
-  }
-
-  # Copy our Spring Boot run arguments.
-  provisioner "file" {
-    content     = "${data.template_file.springboot_conf.rendered}"
-    destination = "/home/ec2-user/springboot-s3-example.conf"
-
-    connection {
-      user = "ec2-user"
-    }
-  }
-
-  /* Move files into position.
-     This is necessary since the files were uploaded as ec2-user, not root.
-     Start the Nginx and Spring Boot services */
-  provisioner "remote-exec" {
-    inline = [
-      "sudo mv /home/ec2-user/nginx.conf /etc/nginx/nginx.conf",
-      "sudo chown root:root /etc/nginx/nginx.conf",
-      "sudo mv /home/ec2-user/springboot-s3-example-nginx.conf /etc/nginx/conf.d/springboot-s3-example-nginx.conf",
-      "sudo chown root:root /etc/nginx/conf.d/springboot-s3-example-nginx.conf",
-      "sudo mv /home/ec2-user/springboot-s3-example.conf /opt/springboot-s3-example/springboot-s3-example.conf",
-      "sudo chmod 400 /opt/springboot-s3-example/springboot-s3-example.conf",
-      "sudo chown springboot:springboot /opt/springboot-s3-example/springboot-s3-example.conf",
-      "sudo service nginx start",
-      "sudo service springboot-s3-example start"
-    ]
-
-    connection {
-      user = "ec2-user"
-    }
-  }
-
-  tags {
-    Name = "terraform-example-web-instance"
+  lifecycle {
+    create_before_destroy = true
   }
 }
 
-# Create an elastic IP for our instance.
-resource "aws_eip" "ip" {
-  instance = "${aws_instance.instance.id}"
+# Create the autoscaling group.
+resource "aws_autoscaling_group" "autoscaling_group" {
+  launch_configuration = "${aws_launch_configuration.launch_config.id}"
+  min_size             = 3
+  max_size             = 10
+  target_group_arns    = ["${aws_alb_target_group.group.arn}"]
+  vpc_zone_identifier  = ["${aws_subnet.main.*.id}"]
+
+  tag {
+    key = "Name"
+    value = "terraform-example-autoscaling-group"
+    propagate_at_launch = true
+  }
 }
