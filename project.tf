@@ -97,6 +97,10 @@ resource "aws_alb_target_group" "group" {
   protocol = "HTTP"
   vpc_id   = "${aws_vpc.vpc.id}"
 
+  stickiness {
+    type = "lb_cookie"
+  }
+
   # Alter the destination of the health check to be the login page.
   health_check {
     path = "/login"
