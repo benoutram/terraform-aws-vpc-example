@@ -1,4 +1,4 @@
-# Create a security group in the VPC which our instance will belong to.
+# Create a security group in the VPC which our instances will belong to.
 resource "aws_security_group" "default" {
   name        = "terraform_security_group"
   description = "Terraform example security group"

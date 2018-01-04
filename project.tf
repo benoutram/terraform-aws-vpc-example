@@ -1,7 +1,7 @@
 terraform {
   backend "consul" {
     address = "172.17.0.2:8500"
-    path    = "getting-started-example"
+    path    = "terraform-aws-vpc-example"
     lock    = true
   }
 }
@@ -12,13 +12,13 @@ provider "aws" {
   secret_key = "${var.secret_key}"
 }
 
-# Create a key pair that will be assigned to our instance.
+# Create a key pair that will be assigned to our instances.
 resource "aws_key_pair" "deployer" {
   key_name   = "terraform_deployer"
   public_key = "${file(var.public_key_path)}"
 }
 
-# Create a VPC to launch our instance into.
+# Create a VPC to launch our instances into.
 resource "aws_vpc" "vpc" {
   cidr_block = "10.0.0.0/16"
   tags {

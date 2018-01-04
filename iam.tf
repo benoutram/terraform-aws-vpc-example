@@ -1,4 +1,4 @@
-# Create a profile for the S3 access role that will passed to the EC2 instance when it starts.
+# Create a profile for the S3 access role that will passed to the EC2 instances when they start.
 resource "aws_iam_instance_profile" "example_profile" {
   name  = "terraform_instance_profile"
   role = "${aws_iam_role.s3_access_role.name}"
