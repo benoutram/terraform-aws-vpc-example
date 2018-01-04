@@ -37,15 +37,10 @@ server {
     listen 80 default_server;
     server_name terraform.benoutram.co.uk;
 
-    if (\$http_x_forwarded_proto != 'https') {
-      return 301 https://\$host\$request_uri;
-    }
-
     location / {
         proxy_set_header    X-Real-IP \$remote_addr;
         proxy_set_header    Host \$http_host;
         proxy_set_header    X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header    X-Forwarded-Proto \$scheme;
         proxy_pass          http://127.0.0.1:8080;
     }
 }
