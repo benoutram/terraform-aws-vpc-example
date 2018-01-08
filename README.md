@@ -25,7 +25,9 @@ The [Spring Boot S3 Example](https://github.com/benoutram/springboot-s3-example)
 
 The example application has a MySQL database dependency to demonstrate database connectivity with RDS.
 
-## Dependencies ##
+## How do I get set up? ##
+
+### Dependencies ###
 
 This project assumes that you are already familiar with AWS and Terraform.
 
@@ -35,9 +37,47 @@ There are several dependencies that are needed before the Terraform project can 
   * The Access Key ID and Secret Access Key of an AWS IAM user that has programmatic access enabled.
   * A Hosted Zone in AWS Route 53 for the desired domain name of the application.
   * The certificate ARN of an AWS Certificate Manager provisioned SSL certificate for the domain name.
-  * A OpenSSH key pair that will be used to control login access to EC2 instances.
+  * An OpenSSH key pair that will be used to control login access to EC2 instances.
 
-## How do I get set up? ##
+### Grant User permissions required for Terraform actions ###
+
+Terraform is unable to check which IAM permissions are missing during the *plan* phase and will fail during the *apply* phase if the user doesn't have the necessary permissions.
+
+Rather than configuring a user with unrestricted access, this project has been tested with a user that has the AWS `PowerUserAccess` policy.
+
+1. Create an IAM group which will be used for Terraform users e.g. `TerraformUsers`.
+2. Attach the AWS managed policy `PowerUserAccess` to the group.
+3. Add the IAM user with `Programmatic access` enabled to the new group.
+4. Attach a new policy to the group created from the following policy document. This policy is to allow additional actions required by Terraform to create the S3 access role and an instance profile associated with this role.
+
+```javascript
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "iam:CreateRole",
+                "iam:GetRole",
+                "iam:DeleteRole",
+                "iam:CreateInstanceProfile",
+                "iam:AddRoleToInstanceProfile",
+                "iam:RemoveRoleFromInstanceProfile",
+                "iam:GetInstanceProfile",
+                "iam:DeleteInstanceProfile",
+                "iam:GetRolePolicy",
+                "iam:PutRolePolicy",
+                "iam:DeleteRolePolicy",
+                "iam:ListInstanceProfilesForRole",
+                "iam:ListInstanceProfiles"
+            ],
+            "Resource": [
+                "*"
+            ]
+        }
+    ]
+}
+```
 
 ### Configure the project properties ###
 
@@ -76,7 +116,13 @@ Other project properties such as the AWS region and EC2 instance type can be fou
 
 During provisioning of the web server instances, a build of the [Spring Boot S3 Example](https://github.com/benoutram/springboot-s3-example) project will be copied from the S3 bucket defined in the project properties.
 
-If the deployment is successful you should now be able to see the infrastructure created in the AWS web console. After a delay while the web instances are initialised you should be able to launch the web application at https://terraform.[your-domain.com].
+If the deployment is successful you should now be able to see the infrastructure created in the AWS web console. After a delay while the web instances are initialised you should be able to launch the sample web application at https://terraform.[your-domain.com].
+
+There is one sample user that can be used to login:
+
+| Username       | Password |
+| -------------- | ---------|
+| john@smith.com | password |
 
 You can also SSH to any of the public IP addresses of the EC2 web server instances.
 
