@@ -5,6 +5,8 @@ variable "region" {}
 variable "amis" {
   type = "map"
 }
+variable "autoscaling_group_min_size" {}
+variable "autoscaling_group_max_size" {}
 variable "instance_type" {}
 variable "public_key_path" {}
 variable "rds_instance_identifier" {}
@@ -16,3 +18,4 @@ variable "route53_hosted_zone_name" {}
 variable "allowed_cidr_blocks" {
   type = "list"
 }
+variable "s3_bucket_name" {}

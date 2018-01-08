@@ -1,15 +1,12 @@
-terraform {
-  backend "consul" {
-    address = "172.17.0.2:8500"
-    path    = "terraform-aws-vpc-example"
-    lock    = true
-  }
-}
-
 provider "aws" {
+  version    = "~> 0.1"
   region     = "${var.region}"
   access_key = "${var.access_key}"
   secret_key = "${var.secret_key}"
+}
+
+provider "template" {
+  version = "~> 1.0"
 }
 
 # Create a key pair that will be assigned to our instances.
@@ -125,7 +122,7 @@ resource "aws_alb_listener" "listener" {
 # Define a record set in Route 53 for the load balancer.
 resource "aws_route53_record" "terraform" {
   zone_id = "${data.aws_route53_zone.zone.zone_id}"
-  name    = "terraform.benoutram.co.uk"
+  name    = "terraform.${var.route53_hosted_zone_name}"
   type    = "A"
 
   alias {

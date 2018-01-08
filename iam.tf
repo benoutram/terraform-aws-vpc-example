@@ -36,14 +36,14 @@ resource "aws_iam_role_policy" "s3_code_bucket_access_policy" {
     {
       "Effect": "Allow",
       "Action": ["s3:ListBucket"],
-      "Resource": ["arn:aws:s3:::springboot-s3-example"]
+      "Resource": ["arn:aws:s3:::${var.s3_bucket_name}"]
     },
     {
       "Effect": "Allow",
       "Action": [
         "s3:GetObject"
       ],
-      "Resource": ["arn:aws:s3:::springboot-s3-example/*"]
+      "Resource": ["arn:aws:s3:::${var.s3_bucket_name}/*"]
     }
   ]
 }

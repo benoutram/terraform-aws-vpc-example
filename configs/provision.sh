@@ -21,7 +21,7 @@ sudo chsh -s /sbin/nologin springboot
 
 # Copy the Spring Boot application from S3
 sudo mkdir /opt/springboot-s3-example
-sudo aws s3 cp s3://springboot-s3-example/ /opt/springboot-s3-example/ --region=eu-west-1 --recursive --exclude "*" --include "springboot-s3-example*.jar"
+sudo aws s3 cp s3://${s3_bucket_name}/ /opt/springboot-s3-example/ --region=${region} --recursive --exclude "*" --include "springboot-s3-example*.jar"
 sudo mv /opt/springboot-s3-example/springboot-s3-example*.jar /opt/springboot-s3-example/springboot-s3-example.jar
 
 # Write a configuration file with our Spring Boot run arguments
@@ -35,7 +35,6 @@ sudo chown springboot:springboot /opt/springboot-s3-example/springboot-s3-exampl
 sudo cat << EOF > /etc/nginx/conf.d/springboot-s3-example-nginx.conf
 server {
     listen 80 default_server;
-    server_name terraform.benoutram.co.uk;
 
     location / {
         proxy_set_header    X-Real-IP \$remote_addr;

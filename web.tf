@@ -40,6 +40,8 @@ data "template_file" "provision" {
   vars {
     database_endpoint = "${aws_db_instance.default.endpoint}",
     database_password = "${var.database_password}"
+    region = "${var.region}"
+    s3_bucket_name = "${var.s3_bucket_name}"
   }
 }
 
