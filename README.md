@@ -36,7 +36,7 @@ There are several dependencies that are needed before the Terraform project can 
   * The [Terraform](https://www.terraform.io) binary installed and available on the PATH.
   * The Access Key ID and Secret Access Key of an AWS IAM user that has programmatic access enabled.
   * A Hosted Zone in AWS Route 53 for the desired domain name of the application.
-  * The certificate ARN of an AWS Certificate Manager provisioned SSL certificate for the domain name.
+  * The certificate ARN of an AWS Certificate Manager SSL certificate for the domain name.
   * An OpenSSH key pair that will be used to control login access to EC2 instances.
 
 ### Grant User permissions required for Terraform actions ###
@@ -98,7 +98,7 @@ Populate the properties as follows:
 1. `access_key` and `secret_key` are the Access Key ID and Secret Access Key of an AWS IAM user that has programmatic access enabled.
 2. `database_password` is a random password that will be the MySQL password for the terraform user account used by the web application.
 3. `public_key_path` is the local path to the OpenSSH public key file of a key pair that should have access to EC2 web server instances, e.g. /home/*you*/.ssh/id_rsa_terraform.pub.
-4. `certificate_arn` is the ARN of an AWS Certificate Manager provisioned SSL certificate for the domain name that you want to use, e.g. arn:aws:acm:eu-west-1:123456789012:certificate/12345678-1234-1234-1234-123456789012.
+4. `certificate_arn` is the ARN of an AWS Certificate Manager SSL certificate for the domain name that you want to use, e.g. arn:aws:acm:eu-west-1:123456789012:certificate/12345678-1234-1234-1234-123456789012.
 5. `route53_hosted_zone_name` is the domain name of the hosted zone managed in Route 53 e.g. domain.com. A 'terraform' hostname will be created within this domain.
 6. `allowed_cidr_blocks` is a list of allowed CIDR blocks that should have SSL access to the application load balancer and SSH access to the EC2 web server instances, e.g. ["0.0.0.0/0"].
 
