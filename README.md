@@ -48,7 +48,7 @@ Rather than configuring a user with unrestricted access, this project has been t
 1. Create an IAM group which will be used for Terraform users e.g. `TerraformUsers`.
 2. Attach the AWS managed policy `PowerUserAccess` to the group.
 3. Add your IAM user to the new group.
-4. Attach a new policy to the group created from the following policy document. This policy is to allow additional actions required by Terraform to create the S3 access role and an instance profile associated with this role.
+4. Attach a new policy to the group created from the following policy document. This policy is to allow additional actions required by Terraform to create a S3 access role and an instance profile associated with this role.
 
 ```javascript
 {
@@ -99,7 +99,7 @@ Populate the properties as follows:
 2. `database_password` is a random password that will be the MySQL password for the terraform user account used by the web application.
 3. `public_key_path` is the local path to the OpenSSH public key file of a key pair that should have access to EC2 web server instances, e.g. /home/*you*/.ssh/id_rsa_terraform.pub.
 4. `certificate_arn` is the ARN of an AWS Certificate Manager SSL certificate for the domain name that you want to use, e.g. arn:aws:acm:eu-west-1:123456789012:certificate/12345678-1234-1234-1234-123456789012.
-5. `route53_hosted_zone_name` is the domain name of the hosted zone managed in Route 53 e.g. domain.com. A 'terraform' hostname will be created within this domain.
+5. `route53_hosted_zone_name` is the domain name of the Hosted Zone managed in Route 53 e.g. example.com. A 'terraform' hostname will be created within this domain.
 6. `allowed_cidr_blocks` is a list of allowed CIDR blocks that should have SSL access to the application load balancer and SSH access to the EC2 web server instances, e.g. ["0.0.0.0/0"].
 
 Other project properties such as the AWS region and EC2 instance type can be found defined in file `terraform.tfvars`. If you change the region then you will also need to make sure an AMI is defined for it.
