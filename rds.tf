@@ -5,6 +5,7 @@ resource "aws_subnet" "rds" {
   cidr_block              = "10.0.${length(data.aws_availability_zones.available.names) + count.index}.0/24"
   map_public_ip_on_launch = true
   availability_zone       = "${element(data.aws_availability_zones.available.names, count.index)}"
+
   tags {
     Name = "rds-${element(data.aws_availability_zones.available.names, count.index)}"
   }
@@ -18,24 +19,24 @@ resource "aws_db_subnet_group" "default" {
 }
 
 # Create a RDS security group in the VPC which our database will belong to.
-resource "aws_security_group" "rds" {  
-  name = "terraform_rds_security_group"
+resource "aws_security_group" "rds" {
+  name        = "terraform_rds_security_group"
   description = "Terraform example RDS Mysql server"
-  vpc_id = "${aws_vpc.vpc.id}"
+  vpc_id      = "${aws_vpc.vpc.id}"
 
   # Keep the instance private by only allowing traffic from the web server.
   ingress {
-    from_port = 3306
-    to_port = 3306
-    protocol = "tcp"
+    from_port       = 3306
+    to_port         = 3306
+    protocol        = "tcp"
     security_groups = ["${aws_security_group.default.id}"]
   }
 
   # Allow all outbound traffic.
   egress {
-    from_port = 0
-    to_port = 0
-    protocol = "-1"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
 

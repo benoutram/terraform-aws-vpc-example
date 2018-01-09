@@ -38,10 +38,10 @@ data "template_file" "provision" {
   template = "${file("${path.module}/configs/provision.sh")}"
 
   vars {
-    database_endpoint = "${aws_db_instance.default.endpoint}",
+    database_endpoint = "${aws_db_instance.default.endpoint}"
     database_password = "${var.database_password}"
-    region = "${var.region}"
-    s3_bucket_name = "${var.s3_bucket_name}"
+    region            = "${var.region}"
+    s3_bucket_name    = "${var.s3_bucket_name}"
   }
 }
 
@@ -70,8 +70,8 @@ resource "aws_autoscaling_group" "autoscaling_group" {
   vpc_zone_identifier  = ["${aws_subnet.main.*.id}"]
 
   tag {
-    key = "Name"
-    value = "terraform-example-autoscaling-group"
+    key                 = "Name"
+    value               = "terraform-example-autoscaling-group"
     propagate_at_launch = true
   }
 }
