@@ -6,33 +6,33 @@
 ## http://zoltanaltfatter.com/2016/12/17/spring-boot-application-on-ec2/
 ###
 
-sudo yum update -y
+yum update -y
 
 # Install Nginx
-sudo yum install nginx -y
+yum install nginx -y
 
 # Install Java
-sudo yum install java-1.8.0-openjdk-devel -y
-sudo yum remove java-1.7.0-openjdk -y
+yum install java-1.8.0-openjdk-devel -y
+yum remove java-1.7.0-openjdk -y
 
 # Create a new user to run the Spring Boot application as a service and disable the login shell
-sudo useradd springboot
-sudo chsh -s /sbin/nologin springboot
+useradd springboot
+chsh -s /sbin/nologin springboot
 
 # Copy the Spring Boot application from S3
-sudo mkdir /opt/springboot-s3-example
-sudo aws s3 cp s3://${s3_bucket_name}/ /opt/springboot-s3-example/ --region=${region} --recursive --exclude "*" --include "springboot-s3-example*.jar"
-sudo mv /opt/springboot-s3-example/springboot-s3-example*.jar /opt/springboot-s3-example/springboot-s3-example.jar
+mkdir /opt/springboot-s3-example
+aws s3 cp s3://${s3_bucket_name}/ /opt/springboot-s3-example/ --region=${region} --recursive --exclude "*" --include "springboot-s3-example*.jar"
+mv /opt/springboot-s3-example/springboot-s3-example*.jar /opt/springboot-s3-example/springboot-s3-example.jar
 
 # Write a configuration file with our Spring Boot run arguments
-sudo cat << EOF > /opt/springboot-s3-example/springboot-s3-example.conf
-RUN_ARGS="--spring.datasource.url=jdbc:mysql://${database_endpoint}/terraform_test_db?useSSL=false --spring.datasource.password=${database_password}"
+cat << EOF > /opt/springboot-s3-example/springboot-s3-example.conf
+RUN_ARGS="--spring.datasource.url=jdbc:mysql://${database_endpoint}/${database_name}?useSSL=false --spring.datasource.password=${database_password}"
 EOF
-sudo chmod 400 /opt/springboot-s3-example/springboot-s3-example.conf
-sudo chown springboot:springboot /opt/springboot-s3-example/springboot-s3-example.conf
+chmod 400 /opt/springboot-s3-example/springboot-s3-example.conf
+chown springboot:springboot /opt/springboot-s3-example/springboot-s3-example.conf
 
 # Write a Nginx site configuration file to redirect port 80 to 8080
-sudo cat << EOF > /etc/nginx/conf.d/springboot-s3-example-nginx.conf
+cat << EOF > /etc/nginx/conf.d/springboot-s3-example-nginx.conf
 server {
     listen 80 default_server;
 
@@ -46,7 +46,7 @@ server {
 EOF
 
 # Rewrite the default Nginx configuration file to disable the default site
-sudo cat << EOF > /etc/nginx/nginx.conf
+cat << EOF > /etc/nginx/nginx.conf
 user nginx;
 worker_processes auto;
 error_log /var/log/nginx/error.log;
@@ -82,16 +82,16 @@ http {
 EOF
 
 # Set owner read and execute mode on the Spring Boot application for the new user
-sudo chown springboot:springboot /opt/springboot-s3-example/springboot-s3-example.jar
-sudo chmod 500 /opt/springboot-s3-example/springboot-s3-example.jar
+chown springboot:springboot /opt/springboot-s3-example/springboot-s3-example.jar
+chmod 500 /opt/springboot-s3-example/springboot-s3-example.jar
 
 # Install the Spring Boot application as an init.d service by creating a symlink
-sudo ln -s /opt/springboot-s3-example/springboot-s3-example.jar /etc/init.d/springboot-s3-example
+ln -s /opt/springboot-s3-example/springboot-s3-example.jar /etc/init.d/springboot-s3-example
 
 # Automatically start services
-sudo chkconfig nginx on
-sudo chkconfig springboot-s3-example on
+chkconfig nginx on
+chkconfig springboot-s3-example on
 
 # Start the Nginx and Spring Boot services
-sudo service nginx start
-sudo service springboot-s3-example start
+service nginx start
+service springboot-s3-example start
