@@ -1,15 +1,3 @@
-# Create a data source from a shell script for provisioning the machine. The variables will be interpolated within the script.
-data "template_file" "provision" {
-  template = "${file("${path.module}/configs/provision.sh")}"
-
-  vars {
-    database_endpoint = "${aws_db_instance.default.endpoint}"
-    database_password = "${var.database_password}"
-    region            = "${var.region}"
-    s3_bucket_name    = "${var.s3_bucket_name}"
-  }
-}
-
 # Create a new EC2 launch configuration to be used with the autoscaling group.
 resource "aws_launch_configuration" "launch_config" {
   name_prefix                 = "terraform-example-web-instance"
