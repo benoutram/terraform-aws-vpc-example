@@ -45,7 +45,7 @@ resource "aws_security_group" "rds" {
   }
 }
 
-# Create a RDS Mysql database instance in the VPC with our RDS subnet group and security group.
+# Create a RDS MySQL database instance in the VPC with our RDS subnet group and security group.
 resource "aws_db_instance" "default" {
   identifier                = "${var.rds_instance_identifier}"
   allocated_storage         = 5
