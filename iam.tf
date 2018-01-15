@@ -1,9 +1,3 @@
-# Create a profile for the S3 access role that will passed to the EC2 instances when they start.
-resource "aws_iam_instance_profile" "example_profile" {
-  name = "terraform_instance_profile"
-  role = "${aws_iam_role.s3_access_role.name}"
-}
-
 # Create the S3 access role with an inline policy allowing the AWS CLI to assume roles.
 resource "aws_iam_role" "s3_access_role" {
   name = "s3_access_role"
@@ -50,4 +44,10 @@ resource "aws_iam_role_policy" "s3_code_bucket_access_policy" {
   ]
 }
 EOF
+}
+
+# Create a profile for the S3 access role that will passed to the EC2 instances when they start.
+resource "aws_iam_instance_profile" "example_profile" {
+  name = "terraform_instance_profile"
+  role = "${aws_iam_role.s3_access_role.name}"
 }
