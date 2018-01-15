@@ -1,5 +1,5 @@
 amis = {
-  "eu-west-1" = "ami-ebd02392"
+  "eu-west-1" = "ami-e487179d"
 }
 autoscaling_group_max_size = 5
 autoscaling_group_min_size = 3
