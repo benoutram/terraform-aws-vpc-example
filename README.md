@@ -14,7 +14,7 @@
 
 This is an example Terraform project which deploys a web application using AWS infrastructure that is:
 
-* Created in a unique VPC
+* Isolated in a VPC
 * Load balanced
 * Auto scaled
 * Secured by SSL
