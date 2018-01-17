@@ -18,7 +18,7 @@ This is an example Terraform project which deploys a web application using AWS i
 * Load balanced
 * Auto scaled
 * Secured by SSL
-* DNS routed with Route53
+* DNS routed using Route53
 * Accessible by SSH
 
 The [Spring Boot S3 Example](https://github.com/benoutram/springboot-s3-example) web application is deployed to web server instances to visually demonstrate the successful deployment of the infrastructure. A build of the application resides in Amazon S3 storage which is fetched during provisioning of web server instances and set up to run as a service.
