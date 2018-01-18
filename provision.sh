@@ -21,7 +21,7 @@ chsh -s /sbin/nologin springboot
 
 # Copy the Spring Boot application from S3
 mkdir /opt/springboot-s3-example
-aws s3 cp s3://${s3_bucket_name}/ /opt/springboot-s3-example/ --region=${region} --recursive --exclude "*" --include "springboot-s3-example*.jar"
+aws s3 cp s3://${s3_bucket_name}/ /opt/springboot-s3-example/ --region=${region} --no-sign-request --recursive --exclude "*" --include "springboot-s3-example*.jar"
 mv /opt/springboot-s3-example/springboot-s3-example*.jar /opt/springboot-s3-example/springboot-s3-example.jar
 
 # Write a configuration file with our Spring Boot run arguments

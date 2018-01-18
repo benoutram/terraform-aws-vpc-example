@@ -8,7 +8,6 @@ resource "aws_key_pair" "deployer" {
 resource "aws_launch_configuration" "launch_config" {
   name_prefix                 = "terraform-example-web-instance"
   image_id                    = "${lookup(var.amis, var.region)}"
-  iam_instance_profile        = "${aws_iam_instance_profile.example_profile.id}"
   instance_type               = "${var.instance_type}"
   key_name                    = "${aws_key_pair.deployer.id}"
   security_groups             = ["${aws_security_group.default.id}"]
