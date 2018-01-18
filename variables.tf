@@ -12,3 +12,5 @@ variable "route53_hosted_zone_name" {}
 variable "allowed_cidr_blocks" {
   type = "list"
 }
+
+variable "s3_bucket_name" {}
