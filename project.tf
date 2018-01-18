@@ -49,6 +49,22 @@ resource "aws_security_group" "default" {
   description = "Terraform example security group"
   vpc_id      = "${aws_vpc.vpc.id}"
 
+  # Restrict inboud SSH traffic by IP address.
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = "${var.allowed_cidr_blocks}"
+  }
+
+  # Restrict inbound HTTP traffic to the load balancer.
+  ingress {
+    from_port       = 80
+    to_port         = 80
+    protocol        = "tcp"
+    security_groups = ["${aws_security_group.alb.id}"]
+  }
+
   # Allow outbound internet access.
   egress {
     from_port   = 0
