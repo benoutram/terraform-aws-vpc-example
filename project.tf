@@ -61,14 +61,6 @@ resource "aws_security_group" "default" {
     cidr_blocks = "${var.allowed_cidr_blocks}"
   }
 
-  # Restrict inbound HTTP traffic to the load balancer.
-  ingress {
-    from_port       = 80
-    to_port         = 80
-    protocol        = "tcp"
-    security_groups = ["${aws_security_group.alb.id}"]
-  }
-
   # Allow ICMP echo requests.
   ingress {
     from_port       = 8
@@ -77,6 +69,14 @@ resource "aws_security_group" "default" {
     cidr_blocks = "${var.allowed_cidr_blocks}"
   }
 
+  # Restrict inbound HTTP traffic to the load balancer.
+  ingress {
+    from_port       = 80
+    to_port         = 80
+    protocol        = "tcp"
+    security_groups = ["${aws_security_group.alb.id}"]
+  }
+ 
   # Allow outbound internet access.
   egress {
     from_port   = 0
