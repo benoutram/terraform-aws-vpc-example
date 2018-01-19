@@ -69,6 +69,14 @@ resource "aws_security_group" "default" {
     security_groups = ["${aws_security_group.alb.id}"]
   }
 
+  # Allow ICMP echo requests.
+  ingress {
+    from_port       = 8
+    to_port         = 0
+    protocol        = "icmp"
+    cidr_blocks = "${var.allowed_cidr_blocks}"
+  }
+
   # Allow outbound internet access.
   egress {
     from_port   = 0
