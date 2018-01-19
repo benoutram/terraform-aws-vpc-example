@@ -49,36 +49,6 @@ Rather than configuring a user with unrestricted access, this project has been t
 1. Create an IAM group which will be used for Terraform users e.g. `TerraformUsers`.
 2. Attach the AWS managed policy `PowerUserAccess` to the group.
 3. Add your IAM user to the new group.
-4. Attach a new policy to the group created from the following policy document. This policy is to allow additional actions required by Terraform to create a S3 access role and an instance profile associated with this role.
-
-```javascript
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": [
-                "iam:CreateRole",
-                "iam:GetRole",
-                "iam:DeleteRole",
-                "iam:CreateInstanceProfile",
-                "iam:AddRoleToInstanceProfile",
-                "iam:RemoveRoleFromInstanceProfile",
-                "iam:GetInstanceProfile",
-                "iam:DeleteInstanceProfile",
-                "iam:GetRolePolicy",
-                "iam:PutRolePolicy",
-                "iam:DeleteRolePolicy",
-                "iam:ListInstanceProfilesForRole",
-                "iam:ListInstanceProfiles"
-            ],
-            "Resource": [
-                "*"
-            ]
-        }
-    ]
-}
-```
 
 ### Configure the project properties ###
 
