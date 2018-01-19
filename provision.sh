@@ -36,6 +36,11 @@ cat << EOF > /etc/nginx/conf.d/springboot-s3-example-nginx.conf
 server {
     listen 80 default_server;
 
+    # Redirect if the protocol used by the client of the AWS application load balancer was not HTTPS
+    if (\$http_x_forwarded_proto != 'https') {
+        return 301 https://\$host\$request_uri;
+    }
+
     location / {
         proxy_set_header    X-Real-IP \$remote_addr;
         proxy_set_header    Host \$http_host;
