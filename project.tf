@@ -91,6 +91,13 @@ resource "aws_security_group" "alb" {
     cidr_blocks = "${var.allowed_cidr_blocks}"
   }
 
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = "${var.allowed_cidr_blocks}"
+  }
+
   # Allow all outbound traffic.
   egress {
     from_port   = 0
@@ -133,8 +140,20 @@ resource "aws_alb_target_group" "group" {
   }
 }
 
-# Create a new application load balancer listener.
-resource "aws_alb_listener" "listener" {
+# Create a new application load balancer listener for HTTP.
+resource "aws_alb_listener" "listener_http" {
+  load_balancer_arn = "${aws_alb.alb.arn}"
+  port              = "80"
+  protocol          = "HTTP"
+
+  default_action {
+    target_group_arn = "${aws_alb_target_group.group.arn}"
+    type             = "forward"
+  }
+}
+
+# Create a new application load balancer listener for HTTPS.
+resource "aws_alb_listener" "listener_https" {
   load_balancer_arn = "${aws_alb.alb.arn}"
   port              = "443"
   protocol          = "HTTPS"
