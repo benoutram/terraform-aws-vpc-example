@@ -57,6 +57,14 @@ resource "aws_security_group" "default" {
     cidr_blocks = "${var.allowed_cidr_blocks}"
   }
 
+  # Allow ICMP echo requests.
+  ingress {
+    from_port   = 8
+    to_port     = 0
+    protocol    = "icmp"
+    cidr_blocks = "${var.allowed_cidr_blocks}"
+  }
+
   # Restrict inbound HTTP traffic to the load balancer.
   ingress {
     from_port       = 80
