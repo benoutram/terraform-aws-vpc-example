@@ -108,19 +108,3 @@ ssh ec2-user@[ipaddress]
 ### Destroy the deployment ###
 
 `terraform destroy -var-file="user.tfvars"`
-
-## Notes ##
-
-In the event that you ever need to remove all of the resources manually using the AWS web console (e.g. if the backend has accidently been reintialised), removing the EC2 instances and the IAM S3 Access Role will not remove the instance profile that is associated with it. The next Terraform *apply* will fail due to the instance profile existing.
-
-List all of the instance profiles using the AWS CLI:
-
-```
-aws iam list-instance-profiles
-```
-
-This should reveal a profile named `terraform_instance_profile`. Delete it:
-
-```
-aws iam delete-instance-profile --instance-profile-name terraform_instance_profile
-```
