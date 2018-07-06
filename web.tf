@@ -13,6 +13,7 @@ resource "aws_launch_configuration" "launch_config" {
   security_groups             = ["${aws_security_group.default.id}"]
   associate_public_ip_address = true
   user_data                   = "${data.template_file.provision.rendered}"
+  iam_instance_profile        = "${aws_iam_instance_profile.example_profile.id}"
 
   lifecycle {
     create_before_destroy = true
